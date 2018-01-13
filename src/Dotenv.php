@@ -76,6 +76,26 @@ class Dotenv
     }
 
     /**
+     * Reload environment file in given directory.
+     *
+     * @return array
+     */
+    public function reload()
+    {
+        return $this->loader->setReloading(true)->setImmutable(false)->load();
+    }
+
+    /**
+     * Unload the loaded variables.
+     *
+     * @return void
+     */
+    public function unload()
+    {
+        $this->loader->unload();
+    }
+
+    /**
      * Returns the full path to the file.
      *
      * @param string $path
@@ -103,7 +123,7 @@ class Dotenv
      */
     protected function loadData($overload = false)
     {
-        return $this->loader->setImmutable(!$overload)->load();
+        return $this->loader->setReloading(false)->setImmutable(!$overload)->load();
     }
 
     /**

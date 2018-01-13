@@ -29,6 +29,20 @@ class Loader
     protected $immutable;
 
     /**
+     * Are we reloading?
+     *
+     * @var bool
+     */
+    protected $reloading = false;
+
+    /**
+     * The loaded environment variables.
+     *
+     * @var array
+     */
+    protected $loaded = array();
+
+    /**
      * Create a new loader instance.
      *
      * @param string $filePath
@@ -63,6 +77,19 @@ class Loader
     public function getImmutable()
     {
         return $this->immutable;
+    }
+
+    /**
+     * Set reloading value.
+     *
+     * @param bool $reloading
+     * @return $this
+     */
+    public function setReloading($reloading)
+    {
+        $this->reloading = $reloading;
+
+        return $this;
     }
 
     /**
@@ -354,9 +381,10 @@ class Loader
     {
         list($name, $value) = $this->normaliseEnvironmentVariable($name, $value);
 
-        // Don't overwrite existing environment variables if we're immutable
+        // Don't overwrite existing environment variables if we're immutable unless we are reloading them
         // Ruby's dotenv does this with `ENV[key] ||= value`.
-        if ($this->immutable && $this->getEnvironmentVariable($name) !== null) {
+        if ($this->immutable && $this->getEnvironmentVariable($name) !== null &&
+            !($this->reloading && array_key_exists($name, $this->loaded))) {
             return;
         }
 
@@ -372,6 +400,22 @@ class Loader
 
         $_ENV[$name] = $value;
         $_SERVER[$name] = $value;
+
+        $this->loaded[$name] = true;
+    }
+
+    /**
+     * Unload the loaded variables.
+     *
+     * @return void
+     */
+    public function unload()
+    {
+        foreach ($this->loaded as $name => $loaded) {
+            $this->clearEnvironmentVariable($name);
+        }
+
+        $this->loaded = array();
     }
 
     /**
